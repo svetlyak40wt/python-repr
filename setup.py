@@ -25,7 +25,7 @@ setup(
     name='repr',
     version='0.1.0',
     license='BSD',
-    description='A shortcut to generate __repr__ methods.',
+    description='A shortcut to generate __repr__ methods for python classes',
     long_description='%s\n%s' % (
         re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
         re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
@@ -64,7 +64,7 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
+        'six',
     ],
     extras_require={
         # eg:

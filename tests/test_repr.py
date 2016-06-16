@@ -5,9 +5,14 @@ from __future__ import print_function
 
 from nose.tools import eq_
 from magic_repr import (
+    serialize_list,
+    serialize_text,
+    is_multiline,
+    format_value,
     make_repr,
-    _get_indent,
-    _inc_indent)
+    padding_adder,
+    get_indent,
+    inc_indent)
 
 
 def test_automatic_builder_sorts_alphabetically():
@@ -165,6 +170,7 @@ def test_long_list_shown_vertically():
         __repr__ = make_repr('foo')
 
     instance = TestMe()
+
     expected = """
 <TestMe foo=[0,
              1,
@@ -190,30 +196,149 @@ def test_long_list_shown_vertically():
              21,
              22,
              23,
-             24]
+             24]>
 """
+
     eq_(repr(instance),
         expected.strip())
 
 
 def test_zero_indent():
     # By default, indent is zero
-    eq_(_get_indent(), 0)
+    eq_(get_indent(), 0)
 
 
 def test_inc_indent():
     # check if nested _inc_indent calls increment indentation level
 
-    with _inc_indent(2):
+    with inc_indent(2):
         # first increment
-        eq_(_get_indent(), 2)
+        eq_(get_indent(), 2)
 
         # second
-        with _inc_indent(5):
-            eq_(_get_indent(), 7)
+        with inc_indent(5):
+            eq_(get_indent(), 7)
 
         # now second value should be substracted
-        eq_(_get_indent(), 2)
+        eq_(get_indent(), 2)
 
     # and finally, first value substracted
-    eq_(_get_indent(), 0)
+    eq_(get_indent(), 0)
+
+
+def test_format_for_long_list():
+    value = list(range(25))
+    expected = u"""
+[0,
+ 1,
+ 2,
+ 3,
+ 4,
+ 5,
+ 6,
+ 7,
+ 8,
+ 9,
+ 10,
+ 11,
+ 12,
+ 13,
+ 14,
+ 15,
+ 16,
+ 17,
+ 18,
+ 19,
+ 20,
+ 21,
+ 22,
+ 23,
+ 24]
+"""
+    eq_(format_value(value), expected.strip())
+
+
+def test_is_multiline():
+    eq_(is_multiline('blah'), False)
+    eq_(is_multiline('blah\nminor'), True)
+
+
+
+def test_serialize_list_of_texts_when_there_are_few_oneline_short_texts():
+    lst = ['blah=minor', 'foo=bar']
+    output = '<SomeClass '
+    expected = '<SomeClass blah=minor foo=bar'
+
+    result = serialize_list(output, lst)
+    eq_(result, expected)
+
+
+def test_serialize_list_of_texts_when_there_is_one_multiline_text():
+    # In this case, all texts in the list should be serialized
+    # in one column
+    lst = ['blah=minor', 'foo=foo\n    bar']
+    output = '<SomeClass '
+    expected = """
+<SomeClass blah=minor
+           foo=foo
+               bar
+"""
+
+    result = serialize_list(output, lst)
+    eq_(result, expected.strip())
+
+
+def test_serialize_list_of_texts_when_multiline_text_goes_first():
+    # In this case, all texts in the list should be serialized
+    # in one column and first texts's lines should be formatted each
+    # under another
+    lst = ['foo=foo\n    bar', 'blah=minor']
+    output = '<SomeClass '
+    expected = """
+<SomeClass foo=foo
+               bar
+           blah=minor
+"""
+
+    result = serialize_list(output, lst)
+    eq_(result, expected.strip())
+
+
+def test_serialize_list_should_use_column_mode_when_there_are_more_than_two_items():
+    # In this case, all texts in the list should be serialized
+    # in one column and first texts's lines should be formatted each
+    # under another
+    lst = ['foo', 'bar', 'bazz']
+    output = '<SomeClass '
+    expected = """
+<SomeClass foo
+           bar
+           bazz
+"""
+
+    result = serialize_list(output, lst)
+    eq_(result, expected.strip())
+
+
+def test_padding_adder():
+    adder = padding_adder(4)
+
+    # testing that padding adder works for oneline texts
+    eq_(adder('blah'), '    blah')
+
+    # testing that padding adder works with multiline
+    eq_(adder('foo\nbar'), '    foo\n    bar')
+
+    # checking if adder don't touch leading spaces
+    eq_(adder('foo\n  bar'), '    foo\n      bar')
+
+
+def test_serialize_text():
+    eq_(serialize_text(u'фуу ', u'бар'),
+        u'фуу бар')
+
+    eq_(serialize_text(u'foo ', u'bar\nbazz'),
+        u'foo bar\n    bazz')
+
+    eq_(serialize_text(u'фуу ', u'бар\nбаз'),
+        u'фуу бар\n    баз')

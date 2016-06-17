@@ -4,8 +4,6 @@ import six
 import sys
 import pprint
 
-from threading import local
-from contextlib import contextmanager
 from itertools import starmap, chain
 
 
@@ -13,11 +11,6 @@ __version__ = "0.1.0"
 
 
 ON_PYTHON2 = sys.version_info.major == 2
-
-# this is a thread local storage, to make
-# nested function calls to know about current
-# indentation
-_indent = local()
 
 
 class PrettyPrinter(pprint.PrettyPrinter):
@@ -96,18 +89,9 @@ def serialize_text(out, text):
     padding = len(out)
     # we need to add padding to all lines
     # except the first one
-    #first_line, rest = cut_head(text.split(u'\n'))
     add_padding = padding_adder(padding)
     text = add_padding(text, ignore_first_line=True)
-    #rest = map(add_padding, rest)
 
-    # for first piece, we add padding to all lines except the first one
-    # we need this because this first piece will be joined with
-    # `out` argument, and it's first line will have this padding already.
-#    first_line = add_padding(first_line, ignore_first_line=True)
-
-    # now join lines back
- #   lines = chain((first_line,), rest)
     return out + text
 
 
@@ -158,11 +142,11 @@ def format_value(value):
     elif isinstance(value, (list, tuple)):
         # long lists are shown vertically
         if len(value) > 3:
-            pp = PrettyPrinter(indent=get_indent() + 1)
+            pp = PrettyPrinter()
             result = pp.pformat(value)
             return force_unicode(result)
     elif isinstance(value, dict):
-        pp = PrettyPrinter(indent=get_indent() + 1)
+        pp = PrettyPrinter()
         result = pp.pformat(value)
         return force_unicode(result)
 
@@ -189,20 +173,6 @@ def make_repr(*args):
             field_names = filter(good_name, dir(self))
             field_names = sorted(field_names)
 
-        # if len(field_names) > 2:
-        #     # we need this, to print object with many fields nicely formatted,
-        #     # outputing each field under the previous
-
-        #     # increment indent for fields in column mode
-        #     indent_increment = len(cls_name) + 2
-        #     delimiter = u'\n'
-        # else:
-        #     indent_increment = 0
-        #     delimiter = u' '
-
-        # with inc_indent(indent_increment):
-        #     delimiter += u' ' * get_indent()
-
         fields = ((name, format_value(getattr(self, name)))
                   for name in field_names)
 
@@ -212,9 +182,6 @@ def make_repr(*args):
 
         # join values with they respective keys
         fields = list(starmap(serialize_text, fields))
-
-#        fields = list(starmap(u'{0}={1}'.format, fields))
-        #fields = delimiter.join(fields)
 
         beginning = u'<{cls_name} '.format(
             cls_name=cls_name,
@@ -233,24 +200,3 @@ def make_repr(*args):
         return result
 
     return method
-
-
-@contextmanager
-def inc_indent(value):
-    """Increments indentation value for the block of text.
-    """
-
-    if not hasattr(_indent, 'level'):
-        _indent.level = value
-    else:
-        _indent.level += value
-
-    yield
-
-    _indent.level -= value
-
-
-def get_indent():
-    """Returns current indent for output functions.
-    """
-    return getattr(_indent, 'level', 0)

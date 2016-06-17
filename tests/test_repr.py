@@ -11,9 +11,7 @@ from magic_repr import (
     is_multiline,
     format_value,
     make_repr,
-    padding_adder,
-    get_indent,
-    inc_indent)
+    padding_adder)
 
 
 def test_automatic_builder_sorts_alphabetically():
@@ -202,29 +200,6 @@ def test_long_list_shown_vertically():
 
     eq_(repr(instance),
         expected.strip())
-
-
-def test_zero_indent():
-    # By default, indent is zero
-    eq_(get_indent(), 0)
-
-
-def test_inc_indent():
-    # check if nested _inc_indent calls increment indentation level
-
-    with inc_indent(2):
-        # first increment
-        eq_(get_indent(), 2)
-
-        # second
-        with inc_indent(5):
-            eq_(get_indent(), 7)
-
-        # now second value should be substracted
-        eq_(get_indent(), 2)
-
-    # and finally, first value substracted
-    eq_(get_indent(), 0)
 
 
 def test_format_for_long_list():

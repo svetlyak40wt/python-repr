@@ -344,3 +344,21 @@ def test_on_instance_which_has_dict_attribute():
 
     result = repr(instance)
     eq_(result, expected.strip())
+
+
+def test_if_attribute_can_be_generated_by_callable():
+    # In this case, we check if make_repr can
+    # accept keyword arguments, where value is
+    # a callable which returns attribute's value
+
+    class TestMe(object):
+        def some_method(self):
+            return u'Минор'
+
+    TestMe.__repr__ = make_repr(blah=TestMe.some_method)
+
+    instance = TestMe()
+
+    expected = "<TestMe blah=u'Минор'>"
+    result = repr(instance)
+    eq_(result, expected.strip())

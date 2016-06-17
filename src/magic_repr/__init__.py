@@ -4,7 +4,9 @@ import six
 import sys
 import pprint
 
+from six.moves import zip
 from itertools import starmap, chain
+from operator import attrgetter
 
 
 __version__ = "0.1.0"
@@ -153,7 +155,7 @@ def format_value(value):
     return force_unicode(repr(value))
 
 
-def make_repr(*args):
+def make_repr(*args, **kwargs):
     """Returns __repr__ method which returns ASCII
     representaion of the object with given fields.
     """
@@ -173,8 +175,20 @@ def make_repr(*args):
             field_names = filter(good_name, dir(self))
             field_names = sorted(field_names)
 
-        fields = ((name, format_value(getattr(self, name)))
-                  for name in field_names)
+        # on this stage, we make from field_names an
+        # attribute getters
+        field_getters = zip(field_names,
+                            map(attrgetter, field_names))
+
+        # now process keyword args, they must
+        # contain callables of one argument
+        # and callable should return a field's value
+        field_getters = chain(
+            field_getters,
+            kwargs.items())
+
+        fields = ((name, format_value(getter(self)))
+                  for name, getter in field_getters)
 
         # prepare key strings
         fields = ((u'{0}='.format(name), value)

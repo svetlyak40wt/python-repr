@@ -2,11 +2,11 @@
 
 import six
 import sys
+import pprint
 
 from threading import local
 from contextlib import contextmanager
 from itertools import starmap, chain
-from pprint import PrettyPrinter
 
 
 __version__ = "0.1.0"
@@ -18,6 +18,27 @@ ON_PYTHON2 = sys.version_info.major == 2
 # nested function calls to know about current
 # indentation
 _indent = local()
+
+
+class PrettyPrinter(pprint.PrettyPrinter):
+    def format(self, obj, context, maxlevels, level):
+        # this method is overloaded to print strings in their
+        # human readable, unescaped form
+        # on Python2
+        #
+        # PrettyPrinter from Python3 does not use these
+        # branches, it just call usual `repr` for all
+        # builtin scalar types
+
+        if isinstance(obj, six.binary_type):
+            return "'{0}'".format(obj), True, False
+        elif isinstance(obj, six.text_type):
+            # suppose, all byte strings are in utf-8
+            # don't know if everybody in the world uses anything else?
+            return "u'{0}'".format(obj.encode('utf-8')), True, False
+
+        return pprint.PrettyPrinter.format(self, obj, context, maxlevels, level)
+
 
 
 def force_unicode(value):
@@ -140,6 +161,10 @@ def format_value(value):
             pp = PrettyPrinter(indent=get_indent() + 1)
             result = pp.pformat(value)
             return force_unicode(result)
+    elif isinstance(value, dict):
+        pp = PrettyPrinter(indent=get_indent() + 1)
+        result = pp.pformat(value)
+        return force_unicode(result)
 
     return force_unicode(repr(value))
 

@@ -5,6 +5,7 @@ from __future__ import print_function
 
 from nose.tools import eq_
 from magic_repr import (
+    ON_PYTHON2,
     serialize_list,
     serialize_text,
     is_multiline,
@@ -342,3 +343,29 @@ def test_serialize_text():
 
     eq_(serialize_text(u'фуу ', u'бар\nбаз'),
         u'фуу бар\n    баз')
+
+
+def test_on_instance_which_has_dict_attribute():
+    # In this case, we expect, the dict will be pretty-printed
+    class TestMe(object):
+        def __init__(self):
+            self.foo = {u'foo': u'bar',
+                        u'блах': u'минор'}
+
+        __repr__ = make_repr()
+
+    instance = TestMe()
+
+    if ON_PYTHON2:
+        expected = """
+<TestMe foo={u'foo': u'bar',
+             u'блах': u'минор'}>
+"""
+    else:
+        # Python3 has slightly different PrettyPrinter.
+        # It does not output "u" for strings and wraps
+        # text more smartly
+        expected = "<TestMe foo={'foo': 'bar', 'блах': 'минор'}>"
+
+    result = repr(instance)
+    eq_(result, expected.strip())

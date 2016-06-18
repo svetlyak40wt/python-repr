@@ -4,4 +4,4 @@ Reference
 .. toctree::
     :glob:
 
-    repr*
+    magic_repr*

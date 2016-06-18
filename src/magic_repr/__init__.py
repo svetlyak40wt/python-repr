@@ -11,6 +11,8 @@ from operator import attrgetter
 
 __version__ = "0.1.0"
 
+__all__ = ['make_repr']
+
 
 ON_PYTHON2 = sys.version_info.major == 2
 
@@ -97,7 +99,8 @@ def serialize_text(out, text):
     return out + text
 
 
-def serialize_list(out, lst):
+def serialize_list(out, lst, delimiter=u'', max_length=20):
+
     """This method is used to serialize list of text
     pieces like ["some=u'Another'", "blah=124"]
 
@@ -106,10 +109,11 @@ def serialize_list(out, lst):
 
     Concatenation result is appended to the `out` argument.
     """
-    have_multiline_items = any(map(is_multiline, lst))
-    list_is_too_long = len(lst) > 2
 
-    if have_multiline_items or list_is_too_long:
+    have_multiline_items = any(map(is_multiline, lst))
+    result_will_be_too_long = sum(map(len, lst)) > max_length
+
+    if have_multiline_items or result_will_be_too_long:
         padding = len(out)
         add_padding = padding_adder(padding)
 
@@ -123,9 +127,9 @@ def serialize_list(out, lst):
 
         # now join lines back
         lst = chain((head,), rest)
-        delimiter = u'\n'
+        delimiter += u'\n'
     else:
-        delimiter = u' '
+        delimiter += u' '
 
     return out + delimiter.join(lst)
 
@@ -142,11 +146,12 @@ def format_value(value):
         return u"u'{0}'".format(value)
 
     elif isinstance(value, (list, tuple)):
-        # long lists are shown vertically
-        if len(value) > 3:
-            pp = PrettyPrinter()
-            result = pp.pformat(value)
-            return force_unicode(result)
+        # long lists or lists with multiline items
+        # will be shown vertically
+        values = list(map(format_value, value))
+        result = serialize_list(u'[', values, delimiter=u',') + u']'
+        return force_unicode(result)
+
     elif isinstance(value, dict):
         pp = PrettyPrinter()
         result = pp.pformat(value)
@@ -158,6 +163,22 @@ def format_value(value):
 def make_repr(*args, **kwargs):
     """Returns __repr__ method which returns ASCII
     representaion of the object with given fields.
+
+    Without arguments, ``make_repr`` generates a method
+    which outputs all object's non-protected (non-undercored)
+    arguments which are not callables.
+
+    Accepts ``*args``, which should be a names of object's
+    attributes to be included in the output::
+
+      __repr__ = make_repr('foo', 'bar')
+
+    If you want to generate attribute's content on the fly,
+    then you should use keyword arguments and pass a callable
+    of one argument::
+
+      __repr__ = make_repr(foo=lambda obj: obj.blah + 100500)
+
     """
 
     def method(self):

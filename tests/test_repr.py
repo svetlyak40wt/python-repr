@@ -3,6 +3,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+from itertools import repeat
 from nose.tools import eq_
 from magic_repr import (
     ON_PYTHON2,
@@ -131,8 +132,37 @@ def test_nested_values():
     parent = TestMe(u'родитель')
     instance = TestMe(u'дитя', parent)
 
-    eq_(repr(instance),
-        "<TestMe name=u'дитя' parent=<TestMe name=u'родитель' parent=None>>")
+    expected = """
+<TestMe name=u'дитя'
+        parent=<TestMe name=u'родитель'
+                       parent=None>>
+"""
+    eq_(repr(instance), expected.strip())
+
+
+def test_nested_values_with_padded_fields():
+    # Check if fields of the nested attribute
+    # will be padded with right padding
+
+    class TestMe(object):
+        def __init__(self, name, parent=None):
+            self.name = name
+            self.parent = parent
+            self.foo = False
+
+        __repr__ = make_repr('parent', 'foo', 'name')
+
+    parent = TestMe(u'родитель')
+    instance = TestMe(u'дитя', parent)
+
+    expected = """
+<TestMe parent=<TestMe parent=None
+                       foo=False
+                       name=u'родитель'>
+        foo=False
+        name=u'дитя'>
+"""
+    eq_(repr(instance), expected.strip())
 
 
 def test_when_value_is_in_the_list():
@@ -202,6 +232,39 @@ def test_long_list_shown_vertically():
         expected.strip())
 
 
+def test_list_attribute_can_contain_another_repred_objects_with_indentaion():
+    class Bar(object):
+        def __init__(self):
+            self.first = 1
+            self.second = 2
+            self.third = 3
+
+        __repr__ = make_repr()
+
+    class Foo(object):
+        def __init__(self):
+            self.bars = [Bar() for i in range(3)]
+
+        __repr__ = make_repr()
+
+    instance = Foo()
+
+    expected = """
+<Foo bars=[<Bar first=1
+                second=2
+                third=3>,
+           <Bar first=1
+                second=2
+                third=3>,
+           <Bar first=1
+                second=2
+                third=3>]>
+"""
+
+    eq_(repr(instance), expected.strip())
+
+
+
 def test_format_for_long_list():
     value = list(range(25))
     expected = u"""
@@ -239,13 +302,21 @@ def test_is_multiline():
     eq_(is_multiline('blah\nminor'), True)
 
 
-
 def test_serialize_list_of_texts_when_there_are_few_oneline_short_texts():
-    lst = ['blah=minor', 'foo=bar']
+    lst = ['a=foo', 'b=bar']
     output = '<SomeClass '
-    expected = '<SomeClass blah=minor foo=bar'
+    expected = '<SomeClass a=foo b=bar'
 
     result = serialize_list(output, lst)
+    eq_(result, expected)
+
+
+def test_serialize_list_can_use_delimiters():
+    lst = ['blah=minor', 'foo=bar']
+    output = ''
+    expected = 'blah=minor, foo=bar'
+
+    result = serialize_list(output, lst, delimiter=u',')
     eq_(result, expected)
 
 
@@ -280,16 +351,18 @@ def test_serialize_list_of_texts_when_multiline_text_goes_first():
     eq_(result, expected.strip())
 
 
-def test_serialize_list_should_use_column_mode_when_there_are_more_than_two_items():
+def test_serialize_list_should_use_column_mode_when_there_are_long_items():
     # In this case, all texts in the list should be serialized
     # in one column and first texts's lines should be formatted each
-    # under another
-    lst = ['foo', 'bar', 'bazz']
+    # under another.
+    # Column mode is selected because summary item's length is more than 20
+
+    lst = ['this-is-a-foo-bar-string', 'and-blah-minor']
     output = '<SomeClass '
     expected = """
-<SomeClass foo
-           bar
-           bazz
+<SomeClass this-is-a-foo-bar-string
+           and-blah-minor
+
 """
 
     result = serialize_list(output, lst)

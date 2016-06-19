@@ -5,10 +5,10 @@ import sys
 
 from six.moves import zip
 from itertools import starmap, chain
-from operator import attrgetter, itemgetter
+from operator import attrgetter
 
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = ['make_repr']
 

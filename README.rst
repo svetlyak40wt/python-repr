@@ -69,7 +69,7 @@ Reasoning
 
 What do you think each time, writing such code?
 
-::
+.. code:: python
 
   def __repr__(self):
       return """
@@ -81,12 +81,14 @@ What do you think each time, writing such code?
 
 Isn't this much better and readable?
 
-::
+.. code:: python
       
       __repr__ = make_repr('changelog', 'type', 'comment', 'created_at', 'resolved_at')
 
 
-And this produces much nicer output::
+And this produces much nicer output:
+
+.. code:: python
 
   <Issue changelog=<Changelog namespace=u'python'
                               name=u'geocoder'
@@ -101,7 +103,9 @@ Another advantage of the magic_repr
 
 Is it's recursiveness. If you use ``magic_repr`` for your objects and they
 include each other, then representation of the parent object will include
-child objects properly nested::
+child objects properly nested:
+
+.. code:: python
 
   <Foo bars={1: <Bar first=1
                      second=2
@@ -121,11 +125,15 @@ Usage
 For simple cases it is enough to call ``make_repr`` without arguments. It will figure out
 which attributes object has and will output them sorted alphabetically.
 
-You can also specify which attributes you want to include in "representaion"::
+You can also specify which attributes you want to include in "representaion":
+
+.. code:: python
 
   __repr__ = make_repr('foo', 'bar')
 
-And to specify a function to create a value for an attribute, using keywords::
+And to specify a function to create a value for an attribute, using keywords:
+
+.. code:: python
 
   class Some(object):
       def is_active(self):

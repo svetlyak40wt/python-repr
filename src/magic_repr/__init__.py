@@ -40,7 +40,7 @@ def padding_adder(padding):
             first_line = pad_text + first_line
 
         rest = (pad_text + line
-                 for line in rest)
+                for line in rest)
 
         lines = chain((first_line, ), rest)
         return u'\n'.join(lines)
@@ -184,11 +184,12 @@ def make_repr(*args, **kwargs):
         if args:
             field_names = args
         else:
-            undercored = lambda name: name.startswith('_')
-            is_method = lambda name: callable(getattr(self, name))
+            def undercored(name): return name.startswith('_')
 
-            good_name = lambda name: not undercored(name) \
-                                 and not is_method(name)
+            def is_method(name): return callable(getattr(self, name))
+
+            def good_name(name):
+                return not undercored(name) and not is_method(name)
 
             field_names = filter(good_name, dir(self))
             field_names = sorted(field_names)

@@ -3,10 +3,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
-from itertools import repeat
 from nose.tools import eq_
 from magic_repr import (
-    ON_PYTHON2,
     serialize_list,
     serialize_text,
     is_multiline,
@@ -404,19 +402,49 @@ def test_on_instance_which_has_dict_attribute():
 
     instance = TestMe()
 
-    if ON_PYTHON2:
-        expected = """
+    expected = """
 <TestMe foo={u'foo': u'bar',
              u'блах': u'минор'}>
 """
-    else:
-        # Python3 has slightly different PrettyPrinter.
-        # It does not output "u" for strings and wraps
-        # text more smartly
-        expected = "<TestMe foo={'foo': 'bar', 'блах': 'минор'}>"
 
     result = repr(instance)
     eq_(result, expected.strip())
+
+
+def test_dict_attribute_can_contain_another_repred_objects_with_indentaion():
+    class Bar(object):
+        def __init__(self):
+            self.first = 1
+            self.second = 2
+            self.third = 3
+
+        __repr__ = make_repr()
+
+    class Foo(object):
+        def __init__(self):
+            self.bars = {
+                1: Bar(),
+                2: Bar(),
+                u'три': Bar(),
+            }
+
+        __repr__ = make_repr()
+
+    instance = Foo()
+
+    expected = """
+<Foo bars={1: <Bar first=1
+                   second=2
+                   third=3>,
+           2: <Bar first=1
+                   second=2
+                   third=3>,
+           u'три': <Bar first=1
+                        second=2
+                        third=3>}>
+"""
+
+    eq_(repr(instance), expected.strip())
 
 
 def test_if_attribute_can_be_generated_by_callable():

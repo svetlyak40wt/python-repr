@@ -96,6 +96,25 @@ And this produces much nicer output::
          created_at=datetime.datetime(2016, 6, 17, 6, 44, 52, 16760, tzinfo=<UTC>)
          resolved_at=None>
 
+Another advantage of the magic_repr
+-----------------------------------
+
+Is it's recursiveness. If you use ``magic_repr`` for your objects and they
+include each other, then representation of the parent object will include
+child objects properly nested::
+
+  <Foo bars={1: <Bar first=1
+                     second=2
+                     third=3>,
+             2: <Bar first=1
+                     second=2
+                     third=3>,
+             u'три': <Bar first=1
+                          second=2
+                          third=3>}>
+
+And all this for free! Just do ``__repr__ = make_repr()``.
+
 Usage
 =====
 

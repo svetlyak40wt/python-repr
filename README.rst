@@ -151,7 +151,7 @@ This is because inside of the class it can't reference itself.
 Documentation
 =============
 
-https://python-repr.readthedocs.org/
+https://python-repr.readthedocs.io/
 
 Development
 ===========

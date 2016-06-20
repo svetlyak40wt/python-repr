@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3.0 (2016-06-20)
+------------------
+
+* Now ``make_repr`` can be used for recursive datastructures.
+
 0.2.1 (2016-06-19)
 ------------------
 

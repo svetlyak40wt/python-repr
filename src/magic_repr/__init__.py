@@ -2,6 +2,7 @@
 
 import six
 import sys
+import threading
 
 from six.moves import zip
 from itertools import starmap, chain
@@ -112,49 +113,63 @@ def serialize_list(out, lst, delimiter=u'', max_length=20):
     return out + delimiter.join(lst)
 
 
+recursion_breaker = threading.local()
+recursion_breaker.processed = set()
+
+
 def format_value(value):
     """This function should return unicode representation of the value
     """
-    if isinstance(value, six.binary_type):
-        # suppose, all byte strings are in unicode
-        # don't know if everybody in the world uses anything else?
-        return u"'{0}'".format(value.decode('utf-8'))
+    value_id = id(value)
 
-    elif isinstance(value, six.text_type):
-        return u"u'{0}'".format(value)
+    if value_id in recursion_breaker.processed:
+        return u'<recursion>'
 
-    elif isinstance(value, (list, tuple)):
-        # long lists or lists with multiline items
-        # will be shown vertically
-        values = list(map(format_value, value))
-        result = serialize_list(u'[', values, delimiter=u',') + u']'
-        return force_unicode(result)
+    recursion_breaker.processed.add(value_id)
 
-    elif isinstance(value, dict):
-        items = six.iteritems(value)
+    try:
+        if isinstance(value, six.binary_type):
+            # suppose, all byte strings are in unicode
+            # don't know if everybody in the world uses anything else?
+            return u"'{0}'".format(value.decode('utf-8'))
 
-        # format each key/value pair as a text,
-        # calling format_value recursively
-        items = (tuple(map(format_value, item))
-                 for item in items)
+        elif isinstance(value, six.text_type):
+            return u"u'{0}'".format(value)
 
-        items = list(items)
-        # sort by keys for readability
-        items.sort()
+        elif isinstance(value, (list, tuple)):
+            # long lists or lists with multiline items
+            # will be shown vertically
+            values = list(map(format_value, value))
+            result = serialize_list(u'[', values, delimiter=u',') + u']'
+            return force_unicode(result)
 
-        # for each item value
-        items = [
-            serialize_text(
-                u'{0}: '.format(key),
-                item_value)
-            for key, item_value in items]
+        elif isinstance(value, dict):
+            items = six.iteritems(value)
 
-        # and serialize these pieces as a list, enclosing
-        # them into a curve brackets
-        result = serialize_list(u'{', items, delimiter=u',') + u'}'
-        return force_unicode(result)
+            # format each key/value pair as a text,
+            # calling format_value recursively
+            items = (tuple(map(format_value, item))
+                     for item in items)
 
-    return force_unicode(repr(value))
+            items = list(items)
+            # sort by keys for readability
+            items.sort()
+
+            # for each item value
+            items = [
+                serialize_text(
+                    u'{0}: '.format(key),
+                    item_value)
+                for key, item_value in items]
+
+            # and serialize these pieces as a list, enclosing
+            # them into a curve brackets
+            result = serialize_list(u'{', items, delimiter=u',') + u'}'
+            return force_unicode(result)
+        return force_unicode(repr(value))
+
+    finally:
+        recursion_breaker.processed.remove(value_id)
 
 
 def make_repr(*args, **kwargs):

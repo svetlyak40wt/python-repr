@@ -463,3 +463,31 @@ def test_if_attribute_can_be_generated_by_callable():
     expected = "<TestMe blah=u'Минор'>"
     result = repr(instance)
     eq_(result, expected.strip())
+
+
+def test_attribute_can_contain_recursive_links():
+    # Check if attribute can have recursive link to a parent, like:
+    # A.foo = B
+    # B.foo = A
+    # in this case we should see this chain as a representaion:
+    # A -> B -> A -> <recursive>
+
+    class TestMe(object):
+        def __init__(self, name):
+            self.name = name
+
+        __repr__ = make_repr()
+
+    A = TestMe(u'A')
+    B = TestMe(u'B')
+    A.foo = B
+    B.foo = A
+
+    expected = """
+<TestMe foo=<TestMe foo=<TestMe foo=<recursion>
+                                name=u'A'>
+                    name=u'B'>
+        name=u'A'>
+"""
+    result = repr(A)
+    eq_(result, expected.strip())

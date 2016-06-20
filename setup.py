@@ -23,7 +23,7 @@ def read(*names, **kwargs):
 
 setup(
     name='repr',
-    version='0.2.1',
+    version='0.3.0',
     license='BSD',
     description='A shortcut to generate __repr__ methods for python classes',
     long_description='%s\n%s' % (

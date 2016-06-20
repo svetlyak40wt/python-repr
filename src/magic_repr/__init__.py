@@ -9,7 +9,7 @@ from itertools import starmap, chain
 from operator import attrgetter
 
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"
 
 __all__ = ['make_repr']
 

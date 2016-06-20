@@ -82,7 +82,7 @@ What do you think each time, writing such code?
 Isn't this much better and readable?
 
 .. code:: python
-      
+
       __repr__ = make_repr('changelog', 'type', 'comment', 'created_at', 'resolved_at')
 
 
@@ -129,12 +129,16 @@ You can also specify which attributes you want to include in "representaion":
 
 .. code:: python
 
+  from magic_repr import make_repr
+
   __repr__ = make_repr('foo', 'bar')
 
 And to specify a function to create a value for an attribute, using keywords:
 
 .. code:: python
 
+  from magic_repr import make_repr
+  
   class Some(object):
       def is_active(self):
           return True

@@ -3,6 +3,8 @@
 from __future__ import division, absolute_import
 from __future__ import print_function
 
+import threading
+
 from nose.tools import eq_
 from magic_repr import (
     serialize_list,
@@ -491,3 +493,31 @@ def test_attribute_can_contain_recursive_links():
 """
     result = repr(A)
     eq_(result, expected.strip())
+
+
+def test_repr_can_be_called_in_thread():
+    class TestMe(object):
+        foo = u'bar'
+        __repr__ = make_repr()
+
+    instance = TestMe()
+    results = []
+    exceptions = []
+
+    def do():
+        try:
+            result = repr(instance)
+            results.append(result)
+        except Exception as e:
+            exceptions.append(e)
+
+
+
+    worker = threading.Thread(target=do)
+    worker.start()
+    worker.join()
+
+    # now check if result is ready and equal to expected
+    eq_(exceptions, [])
+    eq_(results[0],
+        "<TestMe foo=u'bar'>")

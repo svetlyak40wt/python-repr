@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.3.1 (2016-06-22)
+------------------
+
+* Fixed issue #1 prevented generated __repr__ methods to work in mutithreaded programs.
+
 0.3.0 (2016-06-20)
 ------------------
 

@@ -113,8 +113,13 @@ def serialize_list(out, lst, delimiter=u'', max_length=20):
     return out + delimiter.join(lst)
 
 
-recursion_breaker = threading.local()
-recursion_breaker.processed = set()
+class RecursionBreaker(threading.local):
+    def __init__(self):
+        super(RecursionBreaker, self).__init__()
+        self.processed = set()
+
+
+recursion_breaker = RecursionBreaker()
 
 
 def format_value(value):
